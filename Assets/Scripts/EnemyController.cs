@@ -61,6 +61,13 @@ public class EnemyController : MonoBehaviour
         {
             Debug.LogWarning($"{nameof(EnemyController)} on {name} has no waypoints assigned.", this);
         }
+
+        if (obstacleMask == 0)
+        {
+            Debug.LogWarning(
+                $"{nameof(EnemyController)} on {name} has no Obstacle Mask set, so it will see " +
+                "through walls. Assign your wall layer to enable line-of-sight blocking.", this);
+        }
     }
 
     private void FixedUpdate()

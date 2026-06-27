@@ -32,18 +32,26 @@ public class EnemyController : MonoBehaviour
     [SerializeField] private float sideHoldDuration = 1f;
     [SerializeField] private float forwardHoldDuration = 1.25f;
 
+    [Header("Physics")]
+    [SerializeField] private bool ignorePlayerCollision = true;
+    [SerializeField] private float stuckTimeout = 2f;
+
     [SerializeField] private EnemyState state = EnemyState.Patrol;
     private int currentWaypointIndex;
     private float waitTimer;
     private float attackTimer;
     private float loseTargetTimer;
     private float lookAroundBaseAngle;
+    private float stuckTimer;
+    private float bestWaypointDistance = float.MaxValue;
     private Transform playerTransform;
     private Rigidbody2D body;
+    private Collider2D bodyCollider;
 
     private void Awake()
     {
         body = GetComponent<Rigidbody2D>();
+        bodyCollider = GetComponent<Collider2D>();
         body.gravityScale = 0f;
         // We drive rotation manually for the FOV facing; stop physics from spinning us.
         body.freezeRotation = true;
@@ -55,6 +63,15 @@ public class EnemyController : MonoBehaviour
         if (player != null)
         {
             playerTransform = player.transform;
+
+            if (ignorePlayerCollision && bodyCollider != null)
+            {
+                // Let the player pass through the enemy so it can't be shoved off its path.
+                foreach (Collider2D playerCollider in player.GetComponentsInChildren<Collider2D>())
+                {
+                    Physics2D.IgnoreCollision(bodyCollider, playerCollider);
+                }
+            }
         }
 
         if (waypoints == null || waypoints.Length == 0)
@@ -215,12 +232,30 @@ public class EnemyController : MonoBehaviour
         }
 
         Vector2 destination = target.position;
+        float distance = Vector2.Distance(body.position, destination);
 
-        if (Vector2.Distance(body.position, destination) <= arrivalThreshold)
+        if (distance <= arrivalThreshold)
         {
             waitTimer = waitDuration;
             AdvanceWaypoint();
             return;
+        }
+
+        // If we can't get closer for a while (e.g. shoved against a wall), give up
+        // on this waypoint and move on to the next one.
+        if (distance < bestWaypointDistance - 0.01f)
+        {
+            bestWaypointDistance = distance;
+            stuckTimer = 0f;
+        }
+        else if (stuckTimeout > 0f)
+        {
+            stuckTimer += Time.deltaTime;
+            if (stuckTimer >= stuckTimeout)
+            {
+                AdvanceWaypoint();
+                return;
+            }
         }
 
         Face(destination - body.position);
@@ -308,6 +343,8 @@ public class EnemyController : MonoBehaviour
     private void AdvanceWaypoint()
     {
         currentWaypointIndex = (currentWaypointIndex + 1) % waypoints.Length;
+        stuckTimer = 0f;
+        bestWaypointDistance = float.MaxValue;
     }
 
     private void OnDrawGizmosSelected()

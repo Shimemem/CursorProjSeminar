@@ -1428,6 +1428,12 @@ MonoBehaviour:
   - {fileID: 828815525}
   - {fileID: 1222331902}
   - {fileID: 537423168}
+  - {fileID: 1332202645}
+  - {fileID: 285426013}
+  - {fileID: 1141838738}
+  - {fileID: 303137496}
+  - {fileID: 2094288334}
+  - {fileID: 1241770848}
   moveSpeed: 2
   rotationLerpSpeed: 8
   waitDuration: 1
@@ -1443,6 +1449,8 @@ MonoBehaviour:
   lookAroundAngle: 60
   sideHoldDuration: 1
   forwardHoldDuration: 1.25
+  ignorePlayerCollision: 1
+  stuckTimeout: 2
   state: 0
 --- !u!212 &929855897
 SpriteRenderer:
